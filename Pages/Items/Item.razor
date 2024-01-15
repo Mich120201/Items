@@ -1,0 +1,128 @@
+﻿@page "/"
+
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@using ItemBlazor.Models
+@using MudBlazor
+
+<nav class="navbar navbar-expand-lg navbar-light fixed-top" style="background-color: #F57C00;">
+    <MudAppBar Color="Color.Dark" Fixed="true">
+        <MudPaper Width="250px" Class="py-3" Elevation="1">
+            <MudNavMenu style="display: flex; text-decoration: none; color: #000000">
+                <MudIcon Icon="fas fa-dragon" Color="Color.Success" Size="Size.Large" Style="margin-left: 20px; margin-top: 5px" />
+                <MudLink Href="/" style="flex: 1; margin-left: 30px; text-decoration: none; color: #000000">Item</MudLink>
+                <MudLink Href="/device" style="flex: 1; text-decoration: none; color: #000000">Device</MudLink>
+            </MudNavMenu>
+        </MudPaper>
+    </MudAppBar>
+</nav>
+
+<style>
+    .centrato {
+        border: 1px solid #FB8C00;
+        width: 100px;
+        height: 40px;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: #FB8C00;
+        color: #fffafa;
+        text-decoration: none;
+    }
+</style>
+
+<MudContainer Style="margin-top: 100px; margin-left: 350px">
+    <MudGrid Style="display: flex;">
+        @if (items_type != null)
+        {
+            @foreach (var item in items_type)
+            {
+                <MudItem xs="6" sm="6" md="3" lg="3" xl="2" class="m-3">
+                    <MudCard Color="Color.Info" class="centrato" Style="width: 200px; height: 75px">
+                        <a href="/item/item_type/@item" style="text-decoration: none; color: #000000">
+                            <MudCardContent>
+                                @if (item == "Console")
+                                {
+                                    <MudIcon Icon="fas fa-vr-cardboard" Color="Color.Success" Size="Size.Large" Style="margin-left: 40px; margin-top: 5px" />
+                                    <h3>@item</h3>
+                                }
+                                else if (item == "Joystick")
+                                {
+                                    <MudIcon Icon="fas fa-gamepad" Color="Color.Success" Size="Size.Large" Style="margin-left: 40px; margin-top: 5px" />
+                                    <h3>@item</h3>
+                                }
+                                else
+                                {
+                                    <MudIcon Icon="fas fa-headset" Color="Color.Success" Size="Size.Large" Style="margin-left: 30px; margin-top: 5px" />
+                                    <h3>@item</h3>
+                                }
+                            </MudCardContent>
+                        </a>
+                    </MudCard>
+                </MudItem>
+            }
+        }
+    </MudGrid>
+</MudContainer>
+
+<div>
+    <MudButton Variant="Variant.Filled" Style="background-color: #EF6C00; border-color: #EF6C00; margin-top: 20px" @onclick="ToggleAddItem">Add Item</MudButton>
+    @if (add == true)
+    {
+        <MudPaper Class="m-2" BackgroundColor="Color.Info">
+            <div class="m-2">
+                <h6>Per aggiungere un nuovo Item compilare lo schema riportato qui sotto:</h6>
+                <h6>Nome dell'Item:</h6>
+                <MudTextField @bind-Value="newItemName" Placeholder="New Item Name" />
+                <h6 style="margin-top: 10px">Tipo dell'Item:</h6>
+                <MudTextField @bind-Value="newItemType" Placeholder="New Item Type" />
+                <MudButton @onclick="AddItem" Style="background-color: #EF6C00; border-color: #EF6C00; margin-top: 10px">Add</MudButton>
+            </div>
+        </MudPaper>
+    }
+</div>
+
+@code {
+    private string? newItemName;
+    private string? newItemType;
+
+    private Guid id;
+
+    private Items editItem = new Items();
+
+    private Items[]? items;
+    private List<string> items_type = new();
+
+    private bool add = false;
+
+    private async Task NavigateToAsync(string uri)
+    {
+        NavigationManager.NavigateTo(uri);
+    }
+
+    private async Task ToggleAddItem()
+    {
+        if (add == false)
+            add = true;
+        else
+            add = false;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        items_type.Add("Console");
+        items_type.Add("Joystick");
+        items_type.Add("Cuffie");
+    }
+
+    private async Task AddItem()
+    {
+        var addItem = new Items { Name = newItemName, Type = newItemType };
+        await Http.PostAsJsonAsync("api/Items", addItem);
+        items = await Http.GetFromJsonAsync<Items[]>("api/Items");
+    }
+}

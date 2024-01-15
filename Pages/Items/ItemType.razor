@@ -1,0 +1,83 @@
+﻿@page "/item/item_type/{type}"
+
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@using ItemBlazor.Models
+@using MudBlazor
+
+<nav class="navbar navbar-expand-lg navbar-light fixed-top" style="background-color: #F57C00;">
+    <MudAppBar Color="Color.Dark" Fixed="true">
+        <MudPaper Width="250px" Class="py-3" Elevation="1">
+            <MudNavMenu style="display: flex; text-decoration: none; color: #000000">
+                @if (type == "Console")
+                {
+                    <MudIcon Icon="fas fa-vr-cardboard" Color="Color.Success" Size="Size.Large" Style="margin-left: 20px; margin-top: 5px" />
+                }
+                else if (type == "Joystick")
+                {
+                    <MudIcon Icon="fas fa-gamepad" Color="Color.Success" Size="Size.Large" Style="margin-left: 20px; margin-top: 5px" />
+                }
+                else
+                {
+                    <MudIcon Icon="fas fa-headset" Color="Color.Success" Size="Size.Large" Style="margin-left: 20px; margin-top: 5px" />
+                }
+                <MudLink Href="/" style="flex: 1; margin-left: 30px; text-decoration: none; color: #000000">Item</MudLink>
+                <MudLink Href="/device" style="flex: 1; text-decoration: none; color: #000000">Device</MudLink>
+            </MudNavMenu>
+        </MudPaper>
+    </MudAppBar>
+</nav>
+
+<style>
+    .centrato { 
+        border: 1px solid #FB8C00;
+        width: 325px;
+        height: 300px;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: #FB8C00;
+        color: #fffafa;
+        text-decoration: none;
+    }
+</style>
+
+<MudContainer Style="margin-top: 100px">
+    <MudGrid Style="display: flex;">
+        @if (items == null)
+        {
+            <p>No items found.</p>
+        }
+        else
+        {
+            @foreach (var item in items)
+            {
+                @if (item.Type == type)
+                {
+                    <MudItem xs="4" sm="4" md="4" lg="4" xl="4" class="m-3">
+                        <MudCard Color="Color.Info" class="centrato" Style="width: 200px; height: 75px">
+                            <a href="/item/@item.Id" style="text-decoration: none; color: #000000">
+                                <MudCardContent>
+                                    <h4>@item.Name</h4>
+                                </MudCardContent>
+                            </a>
+                        </MudCard>
+                    </MudItem>
+                }
+            }
+        }
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private Items[]? items;
+
+    [Parameter] public string type { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync() =>
+        items = await Http.GetFromJsonAsync<Items[]>("api/Items");
+}

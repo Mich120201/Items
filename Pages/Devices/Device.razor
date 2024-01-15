@@ -1,0 +1,85 @@
+﻿@page "/device"
+
+@using Microsoft.AspNetCore.Components
+@using ItemBlazor.Models
+@inject HttpClient Http
+@using MudBlazor
+@inherits LayoutComponentBase
+
+<nav class="navbar navbar-expand-lg navbar-light fixed-top" style="background-color: #F57C00;">
+    <MudAppBar Color="Color.Dark" Fixed="true">
+        <MudPaper Width="250px" Class="py-3" Elevation="1">
+            <MudNavMenu style="display: flex; text-decoration: none; color: #000000">
+                <MudIcon Icon="fas fa-dice-d20" Color="Color.Success" Size="Size.Large" Style="margin-left: 20px; margin-top: 5px" />
+                <MudLink Href="/" style="flex: 1; margin-left: 30px; text-decoration: none; color: #000000">Item</MudLink>
+                <MudLink Href="/device" style="flex: 1; text-decoration: none; color: #000000">Device</MudLink>
+            </MudNavMenu>
+        </MudPaper>
+    </MudAppBar>
+</nav>
+
+<style>
+    .centrato {
+        border: 1px solid #FB8C00;
+        width: 325px;
+        height: 300px;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: #FB8C00;
+        color: #fffafa;
+        text-decoration: none;
+        margin-top: 100px;
+    }
+</style>
+
+<MudGrid Style="display: flex; margin-left: 350px">
+    @if (devices_type == null)
+    {
+        <p>No items found.</p>
+    }
+    else
+    {
+        @foreach (var device in devices_type)
+        {
+            <MudItem xs="6" sm="6" md="3" lg="3" xl="2" class="m-3">
+                <MudCard Color="Color.Info" class="centrato" Style="width: 200px; height: 75px">
+                    <a href="/device_type/@device" style="text-decoration: none; color: #000000">
+                        <MudCardContent>
+                            @if (device == "Memoria")
+                            {
+                                <MudIcon Icon="fas fa-puzzle-piece" Color="Color.Success" Size="Size.Large" Style="margin-left: 40px; margin-top: 5px" />
+                                <h4>@device</h4>
+                            }
+                            else if (device == "Batteria")
+                            {
+                                <MudIcon Icon="fas fa-ghost" Color="Color.Success" Size="Size.Large" Style="margin-left: 40px; margin-top: 5px" />
+                                <h4>@device</h4>
+                            }
+                            else
+                            {
+                                <MudIcon Icon="fas fa-headset" Color="Color.Success" Size="Size.Large" Style="margin-left: 55px; margin-top: 5px" />
+                                <h4>@device</h4>
+                            }
+                        </MudCardContent>
+                    </a>
+                </MudCard>
+            </MudItem>
+        }
+    }
+</MudGrid>
+
+@code {
+    private List<string> devices_type = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        devices_type.Add("Memoria");
+        devices_type.Add("Batteria");
+        devices_type.Add("Altoparlante");
+    }
+}

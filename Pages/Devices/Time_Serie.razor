@@ -1,0 +1,170 @@
+﻿@page "/device/{id}"
+
+@using ItemBlazor.Models
+@inject IJSRuntime JSRuntime
+@using MudBlazor
+@inject HttpClient Http
+
+<nav class="navbar navbar-expand-lg navbar-light fixed-top" style="background-color: #F57C00">
+    <MudAppBar Color="Color.Dark" Fixed="true">
+        <MudPaper Width="250px" Class="py-3" Elevation="1">
+            <MudNavMenu style="display: flex; text-decoration: none; color: #000000">
+                <MudIcon Icon="fas fa-dungeon" Color="Color.Success" Size="Size.Large" Style="margin-left: 20px; margin-top: 5px" />
+                <MudLink Href="/" style="flex: 1; margin-left: 30px; text-decoration: none; color: #000000">Item</MudLink>
+                <MudLink Href="/device" style="flex: 1; text-decoration: none; color: #000000">Device</MudLink>
+            </MudNavMenu>
+        </MudPaper>
+    </MudAppBar>
+</nav>
+
+<style>
+    .centrato {
+        border: 1px solid #FB8C00;
+        width: 325px;
+        height: 300px;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: #FB8C00;
+        color: #fffafa;
+        text-decoration: none;
+        margin-top: 100px;
+    }
+
+    .centro {
+        justify-content: center;
+        align-items: center;
+        color: #000000;
+    }
+</style>
+
+@if (devices == null)
+{
+    <p style="color: #000000;">No Device found.</p>
+}
+else
+{
+    @foreach (var device in devices)
+    {
+        @if (deviceId == device.Id)
+        {
+            <MudContainer Style="align-items: center; text-align: center; color: #BF360C; margin-top: 100px">
+                <MudText Typo="Typo.h2">@device.Name</MudText>
+            </MudContainer>
+        }
+    }
+}
+
+@if (i > 0)
+{
+    <MudChart ChartType="ChartType.Line" ChartSeries="@Series" @bind-SelectedIndex="Index" XAxisLabels="@XAxisLabels" Width="100%" Height="350px" ChartOptions="@Options" />
+        <MudGrid>
+                <MudItem xs="6">
+                    <MudSlider @bind-Value="Options.LineStrokeWidth" Min="1" Max="10" Color="Color.Info">Line Width: @Options.LineStrokeWidth.ToString()</MudSlider>
+                </MudItem>
+        </MudGrid>
+}
+else
+{
+    <h3> Il Device non ha valori registrati</h3>
+}
+
+<div style="margin-top: 20px">
+    <MudPaper Elevation="4" Class="m-2" BackgroundColor="Color.Info">
+        <div class="m-2">
+            <h6>Per eliminare questo Device basta cliccare il bottone qui sotto</h6>
+            <MudButton @onclick="MostraConfermaEliminazione" Style="background-color: #EF6C00; border-color: #EF6C00; margin-top: 10px">Delete</MudButton>
+        </div>
+    </MudPaper>
+</div>
+
+@code {
+
+    public TimeSeries[]? timeSeries;
+    public Devices[]? devices;
+
+    private Devices editDevice = new Devices();
+
+    public Guid deviceId;
+
+    public List<double> values = new List<double>();
+    public List<DateTime> data = new List<DateTime>();
+    public List<ChartSeries> Series = new List<ChartSeries>();
+
+    public ChartOptions Options = new ChartOptions();
+
+    private int Index = -1;
+    public int i = 0;
+
+    public double[]? dataValue;
+
+    public string[] XAxisLabels { get; set; } = Array.Empty<string>();
+
+    private double newTSValue;
+    private string? newTSType;
+
+    [Parameter] public string id { get; set; } = string.Empty;
+
+    public bool add = false;
+    public bool update = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Guid.TryParse(id, out deviceId))
+        {
+            timeSeries = await Http.GetFromJsonAsync<TimeSeries[]>("api/TimeSeries");
+            devices = await Http.GetFromJsonAsync<Devices[]>("api/Devices");
+        }
+        else
+        {
+            Console.WriteLine("Errore ");
+        }
+
+        if (timeSeries != null)
+        {
+            foreach (var timeSerie in timeSeries)
+            {
+                if (timeSerie.DeviceId == deviceId)
+                {
+                    values.Add(timeSerie.Value);
+                    data.Add(timeSerie.Datetime);
+                }
+            }
+            for (i = 0; i < data.Count; i++) { }
+            if (i == 1)
+                values.Add(0);
+            if (i > 0)
+            {
+                dataValue = values?.ToArray();
+                var chartSeries = new ChartSeries() { Data = dataValue };
+                Series.Add(chartSeries);
+                Console.WriteLine(Series);
+                XAxisLabels = data.Select(d => d.ToString("yyyy-MM-dd HH:mm:ss")).ToArray();
+            }
+        }
+    }
+
+    private async Task DeleteDevice()
+    {
+        await Http.DeleteAsync($"api/Devices/{deviceId}");
+    }
+
+    private async Task MostraConfermaEliminazione()
+    {
+        var conferma = await JSRuntime.InvokeAsync<bool>("confirm", "Sei sicuro di voler eliminare il dispositivo?");
+
+        if (conferma)
+        {
+            await DeleteDevice();
+            await JSRuntime.InvokeVoidAsync("alert", "Device eliminato con successo!");
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Eliminazione annullata!");
+        }
+    }
+}

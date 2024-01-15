@@ -1,0 +1,207 @@
+﻿@page "/item/{id}"
+
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@using ItemBlazor.Models
+@using MudBlazor
+@inject IJSRuntime JSRuntime
+
+<nav class="navbar navbar-expand-lg navbar-light fixed-top" style="background-color: #F57C00;">
+    <MudAppBar Color="Color.Dark" Fixed="true">
+        <MudPaper Width="250px" Class="py-3" Elevation="1">
+            <MudNavMenu style="display: flex; text-decoration: none; color: #000000">
+                <MudIcon Icon="fas fa-gamepad" Color="Color.Success" Size="Size.Large" Style="margin-left: 20px; margin-top: 5px" />
+                <MudLink Href="/" style="flex: 1; margin-left: 30px; text-decoration: none; color: #000000">Item</MudLink>
+                <MudLink Href="/device" style="flex: 1; text-decoration: none; color: #000000">Device</MudLink>
+            </MudNavMenu>
+        </MudPaper>
+    </MudAppBar>
+</nav>
+
+<style>
+    .centrato {
+        border: 1px solid #FB8C00;
+        width: 325px;
+        height: 300px;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: #FB8C00;
+        color: #fffafa;
+        text-decoration: none;
+    }
+
+    .centro {
+        justify-content: center;
+        align-items: center;
+        color: #000000;
+    }
+</style>
+
+<MudContainer Style="margin-top: 100px">
+    @if (items == null)
+    {
+        <p>No items found.</p>
+    }
+    else
+    {
+        @foreach (var item in items)
+        {
+            @if (item.Id == itemId)
+            {
+                <MudContainer Style="align-items: center; text-align: center; color: #BF360C; margin-top: 100px">
+                    <MudText Typo="Typo.h2">@item.Name</MudText>
+                </MudContainer>
+            }
+        }
+    }
+    <MudGrid Style="display: flex;">
+        @if (devices == null)
+        {
+            <p>No items found.</p>
+        }
+        else
+        {
+            @foreach (var device in devices)
+            {
+                @if (device.ItemId == itemId)
+                {
+                    <MudItem xs="6" sm="6" md="3" lg="3" xl="2" class="m-3">
+                        <MudCard Color="Color.Info" class="centrato" Style="width: 200px; height: 75px">
+                            <a href="/device/@device.Id" style="text-decoration: none; color: #000000">
+                                <MudCardContent>
+                                    <h4>@device.Name</h4>
+                                </MudCardContent>
+                            </a>
+                        </MudCard>
+                    </MudItem>
+                }
+            }
+        }
+    </MudGrid>
+</MudContainer>
+
+<div>
+    <MudButton Variant="Variant.Filled" Style="background-color: #EF6C00; border-color: #EF6C00; margin-top: 20px; margin-right: 10px" @onclick="AddTrue">Add Device</MudButton>
+    @if (add == true)
+    {
+        <MudPaper Elevation="4" Class="m-2" BackgroundColor="Color.Info">
+            <div class="m-2">
+                <h6>Per aggiungere un nuovo Device compilare lo schema riportato qui sotto:</h6>
+                <h6>Nome del Device:</h6>
+                <MudTextField @bind-Value="newDeviceName" Placeholder="New Device Name" />
+                <h6 style="margin-top: 10px">Tipo del Device:</h6>
+                <MudTextField @bind-Value="newDeviceType" Placeholder="New Device Type" />
+                <MudButton @onclick="AddDevice" Style="background-color: #EF6C00; border-color: #EF6C00; margin-top: 10px">Add</MudButton>
+            </div>
+        </MudPaper>
+    }
+    <MudButton Variant="Variant.Filled" Style="background-color: #EF6C00; border-color: #EF6C00; margin-top: 20px;" @onclick="UpdateTrue">Update Item</MudButton>
+    @if (update == true)
+    {
+        <MudPaper Class="m-2" BackgroundColor="Color.Info">
+            <div class="m-2">
+                <h6>
+                    Per modificare questo Item cliccare prima sul tasto SAVE
+                    poi modificare uno o tutti e due i campi qui sotto:
+                </h6>
+                <h6>Per modificare il nome compilare questo campo:</h6>
+                <MudTextField @bind-Value="editItem.Name" Placeholder="New Item Name" />
+                <h6 style="margin-top: 10px">Per modificare il tipo compilare questo campo:</h6>
+                <MudTextField @bind-Value="editItem.Type" Placeholder="New Item Type" />
+                <MudButton @onclick="UpdateItem" Style="background-color: #EF6C00; border-color: #EF6C00; margin-top: 10px">Add</MudButton>
+            </div>
+        </MudPaper>
+    }
+</div>
+
+<div style="margin-top: 20px">
+    <MudPaper Class="m-2" BackgroundColor="Color.Info">
+        <div class="m-2">
+            <h6>Per eliminare questo Item basta cliccare il bottone qui sotto</h6>
+            <MudButton @onclick="MostraConfermaEliminazione" Style="background-color: #EF6C00; border-color: #EF6C00; margin-top: 10px">Delete</MudButton>
+        </div>
+    </MudPaper>
+</div>
+
+@code {
+    public Devices[]? devices;
+    private Items[]? items;
+
+    public Guid itemId;
+
+    [Parameter] public string id { get; set; } = string.Empty;
+
+    private Items editItem = new Items();
+
+    private string? newDeviceName;
+    private string? newDeviceType;
+
+    public bool add = false;
+    public bool update = false;
+
+    private async Task AddTrue()
+    {
+        if (add == false)
+            add = true;
+        else
+            add = false;
+    }
+
+    private async Task UpdateTrue()
+    {
+        if (update == false)
+            update = true;
+        else
+            update = false;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Guid.TryParse(id, out itemId))
+        {
+            devices = await Http.GetFromJsonAsync<Devices[]>("api/Devices");
+            items = await Http.GetFromJsonAsync<Items[]>("api/Items");
+        }
+        else
+        {
+            Console.WriteLine("Errore ");
+        }
+    }
+
+    private async Task DeleteItem()
+    {
+        await Http.DeleteAsync($"api/Items/{itemId}");
+    }
+
+    private async Task UpdateItem()
+    {
+        editItem = items.Single(i => i.Id == itemId);
+        await Http.PutAsJsonAsync($"api/Items/{editItem.Id}", editItem);
+    }
+
+    private async Task AddDevice()
+    {
+        var addDevice = new Devices { ItemId = itemId, Name = newDeviceName, Type = newDeviceType };
+        await Http.PostAsJsonAsync("api/Devices", addDevice);
+    }
+
+    private async Task MostraConfermaEliminazione()
+    {
+        var conferma = await JSRuntime.InvokeAsync<bool>("confirm", "Sei sicuro di voler eliminare questo item?");
+
+        if (conferma)
+        {
+            await DeleteItem();
+            await JSRuntime.InvokeVoidAsync("alert", "Item eliminato con successo!");
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Eliminazione annullata!");
+        }
+    }
+}

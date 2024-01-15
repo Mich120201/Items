@@ -1,0 +1,81 @@
+﻿@page "/device_type/{type}"
+
+@using ItemBlazor.Models
+@using MudBlazor
+@inject HttpClient Http
+
+<nav class="navbar navbar-expand-lg navbar-light fixed-top" style="background-color: #F57C00;">
+    <MudAppBar Color="Color.Dark" Fixed="true">
+        <MudPaper Width="250px" Class="py-3" Elevation="1">
+            <MudNavMenu style="display: flex; text-decoration: none; color: #000000">
+                @if (type == "Memoria")
+                {
+                    <MudIcon Icon="fas fa-puzzle-piece" Color="Color.Success" Size="Size.Large" Style="margin-left: 20px; margin-top: 5px" />
+                }
+                else if (type == "Batteria")
+                {
+                    <MudIcon Icon="fas fa-ghost" Color="Color.Success" Size="Size.Large" Style="margin-left: 20px; margin-top: 5px" />
+                }
+                else
+                {
+                    <MudIcon Icon="fas fa-headset" Color="Color.Success" Size="Size.Large" Style="margin-left: 20px; margin-top: 5px" />
+                }
+                <MudLink Href="/" style="flex: 1; margin-left: 30px; text-decoration: none; color: #000000">Item</MudLink>
+                <MudLink Href="/device" style="flex: 1; text-decoration: none; color: #000000">Device</MudLink>
+            </MudNavMenu>
+        </MudPaper>
+    </MudAppBar>
+</nav>
+
+<style>
+    .centrato {
+        border: 1px solid #FB8C00;
+        width: 325px;
+        height: 300px;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: #FB8C00;
+        color: #fffafa;
+        text-decoration: none;
+        margin-top: 100px;
+    }
+</style>
+
+<MudGrid Style="display: flex;">
+    @if (devices == null)
+    {
+        <p style="color: #000000;">No Device found.</p>
+    }
+    else
+    {
+        @foreach (var device in devices)
+        {
+            @if (device.Type == type)
+            {
+                <MudItem xs="6" sm="6" md="3" lg="3" xl="2" class="m-3">
+                    <MudCard Color="Color.Info" class="centrato" Style="width: 200px; height: 75px">
+                        <a href="/device/@device.Id" style="text-decoration: none; color: #000000">
+                            <MudCardContent>
+                                <h4>@device.Name</h4>
+                            </MudCardContent>
+                        </a>
+                    </MudCard>
+                </MudItem>
+            }
+        }
+    }
+</MudGrid>
+
+@code {
+    private Devices[]? devices;
+
+    [Parameter] public string type { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync() =>
+        devices = await Http.GetFromJsonAsync<Devices[]>("api/Devices");
+}
